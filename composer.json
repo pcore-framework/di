@@ -1,0 +1,19 @@
+{
+    "name": "pcore/di",
+    "type": "library",
+    "homepage": "https://github.com/pcore-framework/di",
+    "authors": [
+        {
+            "name": "Magomedcoder",
+            "email": "info@magomedcoder.ru"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PCore\\Di\\": "src/"
+        }
+    }
+}
