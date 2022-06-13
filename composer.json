@@ -1,6 +1,7 @@
 {
     "name": "pcore/di",
     "type": "library",
+    "license": "MIT",
     "homepage": "https://github.com/pcore-framework/di",
     "authors": [
         {

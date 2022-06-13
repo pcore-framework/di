@@ -119,12 +119,12 @@ class Container implements ContainerInterface
     {
         if (false === $this->has($id)) {
             $id = $this->getBinding($id);
-            $reflectionClass = Reflection::reflectClass($id);
+            $reflectionClass = Reflection::class($id);
             if ($reflectionClass->isInterface()) {
                 if (!$this->bound($id)) {
                     throw new ContainerException($id . ' не имеет класса реализации.', 600);
                 }
-                $reflectionClass = Reflection::reflectClass($this->getBinding($id));
+                $reflectionClass = Reflection::class($this->getBinding($id));
             }
             $this->set($id, $reflectionClass->newInstanceArgs($this->getConstructorArgs($reflectionClass, $arguments)));
         }
@@ -159,7 +159,7 @@ class Container implements ContainerInterface
         }
         [$objectOrClass, $method] = $callable;
         $isObject = is_object($objectOrClass);
-        $reflectionMethod = Reflection::reflectMethod($isObject ? get_class($objectOrClass) : $this->getBinding($objectOrClass), $method);
+        $reflectionMethod = Reflection::method($isObject ? get_class($objectOrClass) : $this->getBinding($objectOrClass), $method);
         if (false === $reflectionMethod->isAbstract()) {
             if (!$reflectionMethod->isPublic()) {
                 $reflectionMethod->setAccessible(true);
