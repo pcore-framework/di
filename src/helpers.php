@@ -23,13 +23,13 @@ if (false === function_exists('call')) {
     /**
      * Метод вызова контейнера
      *
-     * @param callable $callback массив, замыкание, имя функции
+     * @param array|string|Closure $callback массив, замыкание, имя функции
      * @param array $arguments список параметров, переданных методу
      * @return mixed
      * @throws ContainerExceptionInterface
      * @throws ReflectionException
      */
-    function call(callable $callback, array $arguments = [])
+    function call(array|string|Closure $callback, array $arguments = [])
     {
         return container()->call($callback, $arguments);
     }
@@ -37,11 +37,8 @@ if (false === function_exists('call')) {
 
 if (false === function_exists('make')) {
     /**
-     * @param string $id
-     * @param array $parameters
-     * @return object
-     * @throws ContainerExceptionInterface
-     * @throws ReflectionException
+     * @throws NotFoundException
+     * @throws ReflectionException|ContainerExceptionInterface
      */
     function make(string $id, array $parameters = []): object
     {

@@ -14,8 +14,6 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionNamedType;
 use ReflectionUnionType;
-use Throwable;
-use function array_shift;
 use function is_null;
 use function is_object;
 use function is_string;
@@ -29,12 +27,12 @@ class Container implements ContainerInterface
 {
 
     /**
-     * Соответствие между классом и идентичностью
+     * @var array соответствие между классом и идентичностью
      */
     protected array $bindings = [];
 
     /**
-     * Разрешенный экземпляр
+     * @var array разрешенный экземпляр
      */
     protected array $resolved = [];
 
@@ -54,10 +52,7 @@ class Container implements ContainerInterface
      */
     public function get(string $id)
     {
-        if ($this->has($id)) {
-            return $this->resolved[$this->getBinding($id)];
-        }
-        throw new NotFoundException('Экземпляр не найден: ' . $id);
+        return $this->resolved[$this->getBinding($id)] ?? new NotFoundException('Экземпляр не найден: ' . $id);
     }
 
     /**
@@ -138,8 +133,11 @@ class Container implements ContainerInterface
      */
     public function remove(string $id): void
     {
-        $id = $this->getBinding($id);
-        if ($this->has($id)) {
+        $binding = $this->getBinding($id);
+        if (isset($this->resolved[$binding])) {
+            unset($this->resolved[$binding]);
+        }
+        if ($id !== $binding && isset($this->resolved[$id])) {
             unset($this->resolved[$id]);
         }
     }
@@ -147,12 +145,12 @@ class Container implements ContainerInterface
     /**
      * Вызов метода класса
      *
-     * @param callable $callable массив вызываемых классов или экземпляров и методов
-     * @param array $arguments параметры, переданные методу
-     * @throws ContainerExceptionInterface
-     * @throws ReflectionException|Throwable
+     * @param array|string|Closure $callable массив вызываемых классов или экземпляров и методов
+     * @param array $arguments параметры, переданные методу (ассоциативный массив)
+     * @return mixed
+     * @throws ReflectionException
      */
-    public function call(callable $callable, array $arguments = [])
+    public function call(array|string|Closure $callable, array $arguments = [])
     {
         if ($callable instanceof Closure || is_string($callable)) {
             return $this->callFunc($callable, $arguments);
@@ -176,10 +174,11 @@ class Container implements ContainerInterface
      * Закрытие вызова
      *
      * @param Closure|string $function функция
-     * @param array $arguments список параметров
-     * @throws ReflectionException|NotFoundException|ContainerExceptionInterface
+     * @param array $arguments список параметров (ассоциативный массив)
+     * @throws ReflectionException|NotFoundException
+     * @throws ContainerExceptionInterface
      */
-    public function callFunc($function, array $arguments = [])
+    public function callFunc(string|Closure $function, array $arguments = [])
     {
         $reflectFunction = new ReflectionFunction($function);
 
@@ -206,48 +205,38 @@ class Container implements ContainerInterface
     }
 
     /**
-     * @param ReflectionFunctionAbstract $reflectionFunction способ отражения
-     * @param array $arguments список параметров, поддерживает ассоциативные массивы и будет автоматически передаваться в соответствии с именем переменной
-     * @throws ContainerExceptionInterface|ReflectionException
-     * @throws Throwable
+     * @param ReflectionFunctionAbstract $reflectionFunction метод отражения
+     * @param array $arguments список параметров (ассоциативный массив)
+     * @throws ReflectionException
+     * @throws ContainerExceptionInterface
      */
     public function getFuncArgs(ReflectionFunctionAbstract $reflectionFunction, array $arguments = []): array
     {
-        $objectValues = $funcArgs = [];
-        foreach ($arguments as $argument) {
-            if (is_object($argument)) {
-                $objectValues[get_class($argument)] = $argument;
-            }
-        }
+        $funcArgs = [];
         foreach ($reflectionFunction->getParameters() as $parameter) {
             $name = $parameter->getName();
             if (array_key_exists($name, $arguments)) {
                 $funcArgs[] = $arguments[$name];
-                unset($arguments[$name]);
             } else {
                 $type = $parameter->getType();
                 if (is_null($type)
                     || ($type instanceof ReflectionNamedType && $type->isBuiltin())
-                    || (PHP_VERSION_ID >= 80000 && $type instanceof ReflectionUnionType)
-                    || ($typeName = $type->getName()) === 'Closure') {
-                    $funcArgs[] = $parameter->isOptional() ? $parameter->getDefaultValue() : null;
+                    || $type instanceof ReflectionUnionType
+                    || ($typeName = $type->getName()) === 'Closure'
+                ) {
+                    $funcArgs[] = $parameter->isOptional()
+                        ? $parameter->getDefaultValue()
+                        : throw new ContainerException(sprintf('Отсутствует параметр `%s`', $name));
                 } else {
-                    if (isset($objectValues[$typeName])) {
-                        $funcArgs[] = $objectValues[$typeName];
-                    } else {
-                        try {
-                            $funcArgs[] = $this->make($typeName);
-                        } catch (Throwable $throwable) {
-                            if (!$parameter->isOptional()) {
-                                throw $throwable;
-                            }
-                            $funcArgs[] = $parameter->getDefaultValue();
-                        }
+                    try {
+                        $funcArgs[] = $this->make($typeName);
+                    } catch (ReflectionException | ContainerExceptionInterface $exception) {
+                        $funcArgs[] = $parameter->isOptional() ? $parameter->getDefaultValue() : throw $exception;
                     }
                 }
             }
         }
-        return array_map(fn($value) => is_null($value) && !empty($arguments) ? array_shift($arguments) : $value, $funcArgs);
+        return $funcArgs;
     }
 
 }
