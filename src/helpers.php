@@ -40,7 +40,7 @@ if (false === function_exists('make')) {
      * @throws NotFoundException
      * @throws ReflectionException|ContainerExceptionInterface
      */
-    function make(string $id, array $parameters = []): object
+    function make(string $id, array $parameters = [])
     {
         return container()->make($id, $parameters);
     }
