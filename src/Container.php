@@ -205,10 +205,31 @@ class Container implements ContainerInterface
     }
 
     /**
+     * Типы преобразования
+     * @param $value
+     * @param string $type
+     * @return mixed
+     */
+    protected function castParameter($value, string $type): mixed
+    {
+        return match ($type) {
+            'int' => (int)$value,
+            'string' => (string)$value,
+            'bool' => (bool)$value,
+            'array' => (array)$value,
+            'float' => (float)$value,
+            'double' => (double)$value,
+            'object' => (object)$value,
+            default => $value,
+        };
+    }
+
+    /**
      * @param ReflectionFunctionAbstract $reflectionFunction метод отражения
      * @param array $arguments список параметров (ассоциативный массив)
-     * @throws ReflectionException
+     * @return array
      * @throws ContainerExceptionInterface
+     * @throws ReflectionException
      */
     public function getFuncArgs(ReflectionFunctionAbstract $reflectionFunction, array $arguments = []): array
     {
@@ -216,7 +237,12 @@ class Container implements ContainerInterface
         foreach ($reflectionFunction->getParameters() as $parameter) {
             $name = $parameter->getName();
             if (array_key_exists($name, $arguments)) {
-                $funcArgs[] = $arguments[$name];
+                $injectValue = $arguments[$name];
+                $type = $parameter->getType();
+                if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+                    $injectValue = $this->castParameter($injectValue, $type->getName());
+                }
+                $funcArgs[] = $injectValue;
             } else {
                 $type = $parameter->getType();
                 if (is_null($type)
