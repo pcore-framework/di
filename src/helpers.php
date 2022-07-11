@@ -9,7 +9,7 @@ use Psr\Container\{ContainerExceptionInterface, ContainerInterface};
 /**
  * @github https://github.com/pcore-framework/di
  */
-if (false === function_exists('container')) {
+if (function_exists('container') === false) {
     /**
      * Создание экземпляра контейнера и получение экземпляров
      */
@@ -19,7 +19,7 @@ if (false === function_exists('container')) {
     }
 }
 
-if (false === function_exists('call')) {
+if (function_exists('call') === false) {
     /**
      * Метод вызова контейнера
      *
@@ -35,7 +35,7 @@ if (false === function_exists('call')) {
     }
 }
 
-if (false === function_exists('make')) {
+if (function_exists('make') === false) {
     /**
      * @template T
      * @param class-string<T> $id

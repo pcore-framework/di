@@ -114,12 +114,12 @@ class Container implements ContainerInterface
      * @template T
      * @param class-string<T> $id идентификация, которая может быть интерфейсом
      * @param array $arguments список параметров конструктора
-     * @return T
+     * @return mixed|<T>
      * @throws ContainerExceptionInterface|NotFoundException|ReflectionException
      */
     public function make(string $id, array $arguments = [])
     {
-        if (false === $this->has($id)) {
+        if ($this->has($id) === false) {
             $id = $this->getBinding($id);
             $reflectionClass = Reflection::class($id);
             if ($reflectionClass->isInterface()) {
@@ -165,7 +165,7 @@ class Container implements ContainerInterface
         [$objectOrClass, $method] = $callable;
         $isObject = is_object($objectOrClass);
         $reflectionMethod = Reflection::method($isObject ? get_class($objectOrClass) : $this->getBinding($objectOrClass), $method);
-        if (false === $reflectionMethod->isAbstract()) {
+        if ($reflectionMethod->isAbstract() === false) {
             if (!$reflectionMethod->isPublic()) {
                 $reflectionMethod->setAccessible(true);
             }

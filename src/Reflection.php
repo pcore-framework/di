@@ -18,11 +18,11 @@ use ReflectionProperty;
 final class Reflection
 {
 
-    protected static array $reflectionClasses = [];
-    protected static array $methodParameterNames = [];
-    protected static array $propertiesNames = [];
-    protected static array $reflectionMethods = [];
-    protected static array $reflectionProperties = [];
+    private static array $reflectionClasses = [];
+    private static array $methodParameterNames = [];
+    private static array $propertiesNames = [];
+    private static array $reflectionMethods = [];
+    private static array $reflectionProperties = [];
 
     /**
      * @throws ReflectionException
