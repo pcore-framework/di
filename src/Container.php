@@ -48,11 +48,17 @@ class Container implements ContainerInterface
     }
 
     /**
-     * @inheritDoc
+     * @template T
+     * @param class-string<T> $id
+     * @return T
+     * @throws NotFoundException
      */
     public function get(string $id)
     {
-        return $this->resolved[$this->getBinding($id)] ?? new NotFoundException('Экземпляр не найден: ' . $id);
+        if ($resolved = $this->resolved[$this->getBinding($id)]) {
+            return $resolved;
+        }
+        throw new NotFoundException('Экземпляр не найден: ' . $id);
     }
 
     /**
@@ -105,12 +111,13 @@ class Container implements ContainerInterface
     /**
      * Способ ввода внешнего интерфейса
      *
-     * @param string $id идентификация, которая может быть интерфейсом
+     * @template T
+     * @param class-string<T> $id идентификация, которая может быть интерфейсом
      * @param array $arguments список параметров конструктора
-     * @return mixed
-     * @throws ReflectionException|NotFoundException|ContainerExceptionInterface
+     * @return T
+     * @throws ContainerExceptionInterface|NotFoundException|ReflectionException
      */
-    public function make(string $id, array $arguments = []): object
+    public function make(string $id, array $arguments = [])
     {
         if (false === $this->has($id)) {
             $id = $this->getBinding($id);
@@ -210,7 +217,7 @@ class Container implements ContainerInterface
      * @param string $type
      * @return mixed
      */
-    protected function castParameter($value, string $type): mixed
+    protected function castParameter(mixed $value, string $type): mixed
     {
         return match ($type) {
             'int' => (int)$value,

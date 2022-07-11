@@ -37,8 +37,11 @@ if (false === function_exists('call')) {
 
 if (false === function_exists('make')) {
     /**
+     * @template T
+     * @param class-string<T> $id
+     * @return T
+     * @throws ContainerExceptionInterface|ReflectionException
      * @throws NotFoundException
-     * @throws ReflectionException|ContainerExceptionInterface
      */
     function make(string $id, array $parameters = [])
     {
