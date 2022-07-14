@@ -55,8 +55,9 @@ class Container implements ContainerInterface
      */
     public function get(string $id)
     {
-        if ($resolved = $this->resolved[$this->getBinding($id)]) {
-            return $resolved;
+        $binding = $this->getBinding($id);
+        if (isset($this->resolved[$binding])) {
+            return $this->resolved[$binding];
         }
         throw new NotFoundException('Экземпляр не найден: ' . $id);
     }
@@ -141,9 +142,7 @@ class Container implements ContainerInterface
     public function remove(string $id): void
     {
         $binding = $this->getBinding($id);
-        if (isset($this->resolved[$binding])) {
-            unset($this->resolved[$binding]);
-        }
+        unset($this->resolved[$binding]);
         if ($id !== $binding && isset($this->resolved[$id])) {
             unset($this->resolved[$id]);
         }
@@ -182,6 +181,7 @@ class Container implements ContainerInterface
      *
      * @param Closure|string $function функция
      * @param array $arguments список параметров (ассоциативный массив)
+     * @return mixed
      * @throws ReflectionException|NotFoundException
      * @throws ContainerExceptionInterface
      */
@@ -224,8 +224,7 @@ class Container implements ContainerInterface
             'string' => (string)$value,
             'bool' => (bool)$value,
             'array' => (array)$value,
-            'float' => (float)$value,
-            'double' => (double)$value,
+            'float', 'double' => (float)$value,
             'object' => (object)$value,
             default => $value,
         };
@@ -245,6 +244,7 @@ class Container implements ContainerInterface
             $name = $parameter->getName();
             if (array_key_exists($name, $arguments)) {
                 $injectValue = $arguments[$name];
+                unset($arguments[$name]);
                 $type = $parameter->getType();
                 if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
                     $injectValue = $this->castParameter($injectValue, $type->getName());
@@ -257,9 +257,14 @@ class Container implements ContainerInterface
                     || $type instanceof ReflectionUnionType
                     || ($typeName = $type->getName()) === 'Closure'
                 ) {
-                    $funcArgs[] = $parameter->isOptional()
-                        ? $parameter->getDefaultValue()
-                        : throw new ContainerException(sprintf('Отсутствует параметр `%s`', $name));
+                    if (!$parameter->isVariadic()) {
+                        $funcArgs[] = $parameter->isOptional()
+                            ? $parameter->getDefaultValue()
+                            : throw new ContainerException(sprintf('Отсутствует параметр `%s`', $name));
+                    } else {
+                        array_push($funcArgs, ...array_values($arguments));
+                        break;
+                    }
                 } else {
                     try {
                         $funcArgs[] = $this->make($typeName);
