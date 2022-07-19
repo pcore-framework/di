@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PCore\Di\Annotations;
 
 use Attribute;
-use PCore\Aop\Contracts\PropertyAttribute;
+use PCore\Aop\Contracts\PropertyAnnotation;
 use PCore\Aop\Exceptions\PropertyHandleException;
 use PCore\Di\{Context, Reflection};
 use Throwable;
@@ -16,7 +16,7 @@ use Throwable;
  * @github https://github.com/pcore-framework/di
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Inject implements PropertyAttribute
+class Inject implements PropertyAnnotation
 {
 
     /**
