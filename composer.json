@@ -1,7 +1,15 @@
 {
     "name": "pcore/di",
+    "description": "The di component for PCore",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "php",
+        "pcore",
+        "pcore-framework",
+        "framework",
+        "pcore-component"
+    ],
     "homepage": "https://github.com/pcore-framework/di",
     "authors": [
         {
